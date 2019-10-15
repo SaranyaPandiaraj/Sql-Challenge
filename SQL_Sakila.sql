@@ -112,7 +112,7 @@ WHERE first_name="GROUCHO" AND last_name="WILLIAMS";
 
   -- Hint: [https://dev.mysql.com/doc/refman/5.7/en/show-create-table.html](https://dev.mysql.com/doc/refman/5.7/en/show-create-table.html)
   
-  SHOW CREATE TABLE address;
+SHOW CREATE TABLE address;
 
 -- 6a. Use `JOIN` to display the first and last names, as well as the address, of each staff member. Use the tables `staff` and `address`:
 
@@ -126,15 +126,15 @@ SELECT *
 FROM ADDRESS LIMIT 10;
 
 -- Join ON
-SELECT s.first_name, s.last_name, a.address
-FROM staff s
-JOIN address a
-	ON s.address_id = a.address_id;
+SELECT sta.first_name, sta.last_name, ad.address
+FROM staff sta
+JOIN address ad
+	ON sta.address_id = ad.address_id;
 
 -- Join USING
-SELECT s.first_name, s.last_name, a.address
-FROM staff s
-JOIN address a
+SELECT sta.first_name, sta.last_name, ad.address
+FROM staff sta
+JOIN address ad
 using(address_id);
 
 -- 6b. Use `JOIN` to display the total amount rung up by each staff member in August of 2005. Use tables `staff` and `payment`.
@@ -145,19 +145,19 @@ SELECT *
 FROM payment;
 
 -- Total Amount by Each Staff
-SELECT s.first_name, s.last_name, sum(p.amount)
-FROM staff s
-JOIN payment p
-	ON s.staff_id = p.staff_id
-WHERE EXTRACT(MONTH FROM payment_date) = 8 AND EXTRACT(YEAR FROM payment_date) = 2005
+SELECT sta.first_name, sta.last_name, sum(pay.amount) as "Total Amount"
+FROM staff sta
+JOIN payment pay
+	ON sta.staff_id = pay.staff_id
+WHERE EXTRACT(MONTH FROM pay.payment_date) = 8 AND EXTRACT(YEAR FROM pay.payment_date) = 2005
 GROUP BY 1,2;
 
 -- Total Amount 
-SELECT sum(p.amount) as "Total Amount"
-FROM staff s
-JOIN payment p
-	ON s.staff_id = p.staff_id
-WHERE EXTRACT(MONTH FROM payment_date) = 8 AND EXTRACT(YEAR FROM payment_date) = 2005;
+SELECT sum(pay.amount) as "Total Amount"
+FROM staff sta
+JOIN payment pay
+	ON sta.staff_id = pay.staff_id
+WHERE EXTRACT(MONTH FROM pay.payment_date) = 8 AND EXTRACT(YEAR FROM pay.payment_date) = 2005;
 
 -- 6c. List each film and the number of actors who are listed for that film. Use tables `film_actor` and `film`. Use inner join.
 
@@ -167,21 +167,21 @@ DESCRIBE film;
 SELECT * FROM  film_Actor LIMIT 10;
 SELECT * FROM  film LIMIT 10;
 
-SELECT f.title AS "Film Title", count(fa.actor_id) AS "Number Of Actors"
-FROM film f
+SELECT fi.title AS "Film Title", count(fa.actor_id) AS "Number Of Actors"
+FROM film fi
 INNER JOIN film_actor fa
-	ON f.film_id = fa.film_id
-GROUP BY f.title;
+	ON fi.film_id = fa.film_id
+GROUP BY fi.title;
 
 -- 6d. How many copies of the film `Hunchback Impossible` exist in the inventory system?
 
 DESCRIBE inventory;
 
-SELECT f.title, count(f.title) as "Number of Copies"
-FROM film f 
-INNER JOIN inventory i
-	on f.film_id = i.film_id
-WHERE f.title='Hunchback Impossible'
+SELECT fi.title, count(fi.title) as "Number of Copies"
+FROM film fi 
+INNER JOIN inventory inv
+	on fi.film_id = inv.film_id
+WHERE fi.title='Hunchback Impossible'
 GROUP BY 1;
 
 -- 6e. Using the tables `payment` and `customer` and the `JOIN` command, list the total paid by each customer. List the customers alphabetically by last name:
@@ -191,12 +191,12 @@ GROUP BY 1;
   DESCRIBE payment;
   DESCRIBE customer;
   
-  SELECT c.first_name, c.last_name, sum(amount) as "Total Amount Paid"
-  FROM payment p
-  JOIN customer c
-	ON p.customer_id = c.customer_id
-  GROUP BY c.first_name, c.last_name
-  ORDER BY c.last_name;
+  SELECT cus.first_name, cus.last_name, sum(pay.amount) as "Total Amount Paid"
+  FROM payment pay
+  JOIN customer cus
+	ON pay.customer_id = cus.customer_id
+  GROUP BY cus.first_name, cus.last_name
+  ORDER BY cus.last_name;
   
 -- 7a. The music of Queen and Kris Kristofferson have seen an unlikely resurgence. 
 -- As an unintended consequence, films starting with the letters `K` and `Q` have also soared in popularity. 
@@ -268,7 +268,7 @@ ORDER BY 2 desc;
 
 -- 7f. Write a query to display how much business, in dollars, each store brought in.
 
-SELECT sto.store_id, CONCAT("$", FORMAT(SUM(pay.amount),2)) as "Profit"
+SELECT sto.store_id, CONCAT("$", FORMAT(SUM(pay.amount),2)) as "Revenue"
 FROM store sto
 INNER JOIN inventory inv
 	ON sto.store_id = inv.store_id
@@ -279,12 +279,20 @@ INNER JOIN payment pay
 GROUP by 1;
 
 
+SELECT sto.store_id, concat("$",FORMAT(sum(pay.amount),2)) as "Revenue" 
+FROM store sto
+INNER JOIN staff sta
+	ON sto.store_id = sta.store_id
+INNER JOIN payment pay
+	ON sta.staff_id = pay.staff_id
+GROUP BY 1;
+
 -- 7g. Write a query to display for each store its store ID, city, and country.
 
-SELECT st.store_id, ci.city, co.country
-FROM store st
+SELECT sto.store_id, ci.city, co.country
+FROM store sto
 INNER JOIN address ad
-	ON ad.address_id = ad.address_id
+	ON sto.address_id = ad.address_id
 INNER JOIN city ci
 	ON ad.city_id and ci.city_id
 INNER JOIN country co
